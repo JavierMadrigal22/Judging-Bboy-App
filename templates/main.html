@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid vh-100 d-flex flex-column">
+    <!-- Sección Superior: Competidores -->
+    <div class="row flex-grow-1 justify-content-center align-items-center">
+        <!-- Rojo -->
+        <div class="col-md-5 h-55">
+            <div class="competitor-card-top bg-underground-gray h-75 d-flex flex-column justify-content-center">
+                <h2 class="neon-red text-center mb-0">B-BOY ejemplo1</h2>
+                <div class="votes-display-lg neon-red text-center mt-3">3</div>
+                <small class="text-center text-light-50">Votos en esta ronda</small>
+            </div>
+        </div>
+
+        <!-- Azul -->
+        <div class="col-md-5 h-55">
+            <div class="competitor-card-top bg-underground-gray h-75 d-flex flex-column justify-content-center">
+                <h2 class="neon-blue text-center mb-0">B-GIRL ejemplo2</h2>
+                <div class="votes-display-lg neon-blue text-center mt-3">2</div>
+                <small class="text-center text-light-50">Votos en esta ronda</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección Inferior: Jueces -->
+    <div class="row judges-section bg-underground-gray py-2">
+        <div class="col-12">
+            <h4 class="text-light mb-3 px-4"><i class="fas fa-gavel me-2"></i>Votación de Jueces</h4>
+            <div class="d-flex flex-wrap gap-4 px-4">
+                <!-- Ejemplo de juez con voto -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-light">Javi</span>
+                    <div class="vote-indicator bg-underground-red"></div>
+                </div>
+                
+                <!-- Otros jueces -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-light">Killer</span>
+                    <div class="vote-indicator bg-underground-blue"></div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-light">Jet</span>
+                    <div class="vote-indicator bg-underground-red"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

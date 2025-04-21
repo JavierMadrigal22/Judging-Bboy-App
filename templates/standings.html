@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="fms-table-container">
+        <h1 class="neon-red mb-4"><i class="fas fa-trophy"></i> TABLA DE POSICIONES</h1>
+        
+        <div class="table-responsive">
+            <table class="table fms-table">
+                <thead>
+                    <tr class="underground-header">
+                        <th>#</th>
+                        <th>BBOY</th>
+                        <th>PTS</th>
+                        <th>BATALLAS</th>
+                        <th>VICTORIAS</th>
+                        <th>EMPATES</th>
+                        <th>DERROTAS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for competitor in competitors %}
+                    <tr class="underground-row">
+                        <td class="fw-bold">{{ loop.index }}</td>
+                        <td>
+                            <span class="badge bg-underground-red me-2">BBOY</span>
+                            {{ competitor.name }}
+                        </td>
+                        <td class="neon-red fw-bold">{{ competitor.total_points }}</td>
+                        <td>{{ competitor.battles }}</td>
+                        <td class="text-success">{{ competitor.wins }}</td>
+                        <td class="text-warning">{{ competitor.ties }}</td>
+                        <td class="text-danger">{{ competitor.losses }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

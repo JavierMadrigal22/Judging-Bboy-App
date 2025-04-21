@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container vh-100 d-flex align-items-center justify-content-center">
+    <div class="card bg-underground-gray p-4" style="width: 600px; border: 1px solid #FF003C55;">
+        <h1 class="text-center mb-4 neon-red"><i class="fas fa-hip-hop"></i> Crear Cuenta</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-light">Nombre artístico (AKA)</label>
+                        <input type="text" class="form-control bg-dark text-light" 
+                               name="aka" placeholder="Ej: Bboy Storm" required>
+                    </div>
+                    <!-- Ciudad de origen como <select> -->
+<div class="mb-3">
+    <label class="form-label text-light">Ciudad de origen</label>
+    <select class="form-select bg-dark text-light" name="city" required>
+        <option value="" disabled selected>Seleccione una provincia</option>
+        <option value="San José">San José</option>
+        <option value="Alajuela">Alajuela</option>
+        <option value="Cartago">Cartago</option>
+        <option value="Heredia">Heredia</option>
+        <option value="Guanacaste">Guanacaste</option>
+        <option value="Puntarenas">Puntarenas</option>
+        <option value="Limón">Limón</option>
+    </select>
+</div>
+
+<!-- Nuevo campo: Nivel -->
+<div class="mb-3">
+    <label class="form-label text-light">Nivel</label>
+    <select class="form-select bg-dark text-light" name="nivel" required>
+        <option value="" disabled selected>Seleccione su nivel</option>
+        <option value="Principiante">Principiante</option>
+        <option value="Avanzado">Avanzado</option>
+    </select>
+</div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-light">Edad</label>
+                        <input type="number" class="form-control bg-dark text-light" 
+                               name="age" placeholder="Edad mínima: 12 años" min="12" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-light">Contraseña</label>
+                        <input type="password" class="form-control bg-dark text-light" 
+                               name="password" placeholder="Contraseña segura" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Descripción del perfil</label>
+                        <textarea class="form-control bg-dark text-light" 
+                                  name="description" rows="5" 
+                                  placeholder="Cuéntanos sobre tu estilo, crew, experiencia..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Foto de perfil</label>
+                        <input type="file" class="form-control bg-dark text-light" 
+                               name="photo" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-underground w-100 mt-3">
+                <i class="fas fa-save me-2"></i>Registrarse
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

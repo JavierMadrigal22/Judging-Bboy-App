@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Breaking App{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body class="bg-underground">
+    <!-- Sidebar Offcanvas -->
+    <div class="offcanvas offcanvas-start bg-underground-gray" tabindex="-1" id="sidebar">
+        <div class="offcanvas-header border-bottom border-underground-red">
+            <h5 class="offcanvas-title neon-red">MENU BREAKER</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav flex-column">
+                <!-- Dropdown Jornadas -->
+                <div class="dropdown mb-3">
+                    <a class="btn btn-underground dropdown-toggle w-100 text-start" href="#" 
+                       data-bs-toggle="dropdown">
+                       <i class="fas fa-calendar-days me-2"></i> Jornadas
+                    </a>
+                    <ul class="dropdown-menu bg-underground-gray">
+                        {% for event in all_events %}
+                        <li>
+                            <a class="dropdown-item text-light" 
+                               href="{{ url_for('view_event', event_id=event.id) }}">
+                               {{ event.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                        <li>
+                            <hr class="dropdown-divider border-underground-red">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-light" href="{{ url_for('manage_events') }}">
+                                <i class="fas fa-plus-circle me-2"></i> Nueva Jornada
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <a class="nav-link neon-red-hover" href="{{ url_for('main') }}">
+                    <i class="fas fa-home me-2"></i>Inicio
+                </a>
+                <a class="nav-link neon-red-hover" href="{{ url_for('standings') }}">
+                    <i class="fas fa-trophy me-2"></i>Ranking Global
+                </a>
+                <a class="nav-link neon-red-hover" href="{{ url_for('vote') }}">
+                    <i class="fas fa-vote-yea me-2"></i>Votaciones
+                </a>
+                <a class="nav-link neon-red-hover" href="{{ url_for('profile') }}">
+                    <i class="fas fa-id-card me-2"></i>Mi Perfil
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="d-flex align-items-center py-2 px-4 bg-underground-gray">
+        <button class="btn btn-underground me-3" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="neon-red m-0"><i class="fas fa-hip-hop"></i> BREAKER ARENA</h1>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            {% if current_user.is_authenticated %}
+                <div class="d-flex align-items-center text-white">
+                    <div class="profile-pic-header me-2">
+                        {% if current_user.photo %}
+                            <img src="{{ url_for('static', filename='uploads/' + current_user.photo) }}" 
+                                 class="rounded-circle">
+                        {% else %}
+                            <i class="fas fa-user-secret"></i>
+                        {% endif %}
+                    </div>
+                    {{ current_user.aka }}
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn btn-underground">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container-fluid mt-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
