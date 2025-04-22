@@ -56,10 +56,11 @@ class Competitor(db.Model):
     wins = db.Column(db.Integer, default=0)
     ties = db.Column(db.Integer, default=0)
     losses = db.Column(db.Integer, default=0)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))  # Relación con evento
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))    # Relación con usuario
 
-    event = db.relationship('Event', back_populates='competitors')
+    # Relación única y bien definida
+    event = db.relationship('Event', backref='competitors')
     user = db.relationship('User', backref='competitor_profiles')
 
 class Battle(db.Model):
@@ -76,7 +77,7 @@ class Event(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     
-    competitors = db.relationship('Competitor', back_populates='event', lazy=True)
+    # Relación con participantes
     participants = db.relationship('Participation', backref='event', lazy='dynamic')
 
 
@@ -333,56 +334,11 @@ def view_event(event_id):
                          event=event,
                          participants=participants,
                          competitors=competitors)
-    
-    # Añade estas rutas antes del contexto de procesamiento
-
-@app.route('/get_competitors/<int:event_id>')
-@login_required
-def get_competitors(event_id):
-    try:
-        competitors = Competitor.query.filter_by(event_id=event_id).all()
-        return jsonify([{
-            'id': c.id,
-            'name': c.name,
-            'total_points': c.total_points,  # Nombre de campo consistente
-            'battles': c.battles,
-            'wins': c.wins,
-            'ties': c.ties,
-            'losses': c.losses
-        } for c in competitors])
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify([])
-
-@app.route('/get_competitor/<int:competitor_id>')
-@login_required
-def get_competitor(competitor_id):
-    try:
-        competitor = Competitor.query.get(competitor_id)
-        if not competitor:
-            return jsonify({})
-            
-        return jsonify({
-            'name': competitor.name,
-            'total_points': competitor.total_points,
-            'battles': competitor.battles,
-            'wins': competitor.wins,
-            'ties': competitor.ties,
-            'losses': competitor.losses
-        })
-        
-    except Exception as e:
-        print(f"Error getting competitor: {str(e)}")
-        return jsonify({})
 
 @app.context_processor
 def inject_events():
-    try:
-        events = Event.query.order_by(Event.created_at.desc()).all()
-        return dict(all_events=events)
-    except Exception as e:
-        print(f"Error getting events: {str(e)}")
-        return dict(all_events=[])
+    events = Event.query.order_by(Event.created_at.desc()).all()
+    return dict(all_events=events)
 
 # --- Inicialización ---
 if __name__ == '__main__':
