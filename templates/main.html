@@ -66,9 +66,41 @@
     </div>
 
     <!-- Sección Inferior: Jueces (mantenemos la existente) -->
-    <div class="row judges-section bg-underground-gray py-2">
-        <!-- ... tu contenido existente de jueces ... -->
+    <!-- Sección Inferior: Votaciones -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="voting-section text-center bg-dark text-light p-4 rounded shadow-lg">
+            <h4 class="mb-3">🗳️ Votaciones</h4>
+            <h5 class="text-info">Round 1:</h5>
+            <div class="d-flex justify-content-center gap-4 mt-3">
+                <!-- Voto Juez 1 -->
+                <div class="vote-box p-3 bg-secondary rounded">
+                    <p class="mb-1">Juez 1</p>
+                    <strong id="judge1Vote">-</strong>
+                </div>
+                <!-- Voto Juez 2 -->
+                <div class="vote-box p-3 bg-secondary rounded">
+                    <p class="mb-1">Juez 2</p>
+                    <strong id="judge2Vote">-</strong>
+                </div>
+                <!-- Voto Juez 3 -->
+                <div class="vote-box p-3 bg-secondary rounded">
+                    <p class="mb-1">Juez 3</p>
+                    <strong id="judge3Vote">-</strong>
+                </div>
+                <div class="vote-box p-3 bg-secondary rounded">
+                    <p class="mb-1">Juez 4</p>
+                    <strong id="judge3Vote">-</strong>
+                </div>
+                <div class="vote-box p-3 bg-secondary rounded">
+                    <p class="mb-1">Juez 5</p>
+                    <strong id="judge3Vote">-</strong>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
 </div>
 
 <script>
@@ -103,14 +135,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const nameElement = document.getElementById(`${color}Name`);
         const pointsElement = document.getElementById(`${color}Points`);
 
-        if (competitorId) {
-            fetch(`/get_competitor/${competitorId}`)
-                .then(response => response.json())
-                .then(data => {
-                    nameElement.textContent = data.name;
-                    pointsElement.textContent = data.total_points;
-                });
-        } else {
+        // Dentro de updateCompetitorCard, reemplazar sessionStorage por localStorage
+if (competitorId) {
+    fetch(`/get_competitor/${competitorId}`)
+        .then(response => response.json())
+        .then(data => {
+            nameElement.textContent = data.name;
+            pointsElement.textContent = data.total_points;
+
+            // Guardar en localStorage
+            localStorage.setItem(`selected${color.charAt(0).toUpperCase() + color.slice(1)}Name`, data.name);
+            
+            // Disparar evento de actualización
+            window.dispatchEvent(new Event('storageUpdate'));
+        });
+} else {
             nameElement.textContent = '-';
             pointsElement.textContent = '0';
         }
