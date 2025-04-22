@@ -1,50 +1,144 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container-fluid vh-100 d-flex flex-column">
+    <!-- Selectores Superiores -->
+    <div class="row mb-4 mt-4">
+        <div class="col-md-12">
+            <div class="d-flex gap-3 justify-content-center">
+                <!-- Dropdown de Jornadas -->
+                <select class="form-select bg-dark text-light" id="eventSelect" style="max-width: 250px;">
+                    <option value="">Seleccionar Jornada</option>
+                    {% for event in all_events %}
+                        <option value="{{ event.id }}">{{ event.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección Superior: Competidores -->
     <div class="row flex-grow-1 justify-content-center align-items-center">
         <!-- Rojo -->
-        <div class="col-md-5 h-55">
+        <div class="col-md-5 h-55 position-relative">
+            <!-- Dropdown Competidor Rojo -->
+            <div class="mb-3">
+                <select class="form-select bg-dark text-light competitor-select" id="competitorRed">
+                    <option value="">Seleccionar B-BOY Rojo</option>
+                    {% for event in all_events %}
+                        {% if loop.first %}  {# Solo muestra participantes de la primera jornada inicialmente #}
+                            {% for competitor in event.competitors %}
+                                <option value="{{ competitor.id }}" data-event="{{ event.id }}">{{ competitor.name }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
             <div class="competitor-card-top bg-underground-gray h-75 d-flex flex-column justify-content-center">
-                <h2 class="neon-red text-center mb-0">B-BOY ejemplo1</h2>
-                <div class="votes-display-lg neon-red text-center mt-3">3</div>
+                <h2 class="neon-red text-center mb-0" id="redName">-</h2>
+                <div class="votes-display-lg neon-red text-center mt-3" id="redPoints">0</div>
                 <small class="text-center text-light-50">Votos en esta ronda</small>
             </div>
         </div>
 
         <!-- Azul -->
-        <div class="col-md-5 h-55">
+        <div class="col-md-5 h-55 position-relative">
+            <!-- Dropdown Competidor Azul -->
+            <div class="mb-3">
+                <select class="form-select bg-dark text-light competitor-select" id="competitorBlue">
+                    <option value="">Seleccionar B-BOY Azul</option>
+                    {% for event in all_events %}
+                        {% if loop.first %}  {# Solo muestra participantes de la primera jornada inicialmente #}
+                            {% for competitor in event.competitors %}
+                                <option value="{{ competitor.id }}" data-event="{{ event.id }}">{{ competitor.name }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
             <div class="competitor-card-top bg-underground-gray h-75 d-flex flex-column justify-content-center">
-                <h2 class="neon-blue text-center mb-0">B-GIRL ejemplo2</h2>
-                <div class="votes-display-lg neon-blue text-center mt-3">2</div>
+                <h2 class="neon-blue text-center mb-0" id="blueName">-</h2>
+                <div class="votes-display-lg neon-blue text-center mt-3" id="bluePoints">0</div>
                 <small class="text-center text-light-50">Votos en esta ronda</small>
             </div>
         </div>
     </div>
 
-    <!-- Sección Inferior: Jueces -->
+    <!-- Sección Inferior: Jueces (mantenemos la existente) -->
     <div class="row judges-section bg-underground-gray py-2">
-        <div class="col-12">
-            <h4 class="text-light mb-3 px-4"><i class="fas fa-gavel me-2"></i>Votación de Jueces</h4>
-            <div class="d-flex flex-wrap gap-4 px-4">
-                <!-- Ejemplo de juez con voto -->
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-light">Javi</span>
-                    <div class="vote-indicator bg-underground-red"></div>
-                </div>
-                
-                <!-- Otros jueces -->
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-light">Killer</span>
-                    <div class="vote-indicator bg-underground-blue"></div>
-                </div>
-                
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-light">Jet</span>
-                    <div class="vote-indicator bg-underground-red"></div>
-                </div>
-            </div>
-        </div>
+        <!-- ... tu contenido existente de jueces ... -->
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventSelect = document.getElementById('eventSelect');
+    const competitorRed = document.getElementById('competitorRed');
+    const competitorBlue = document.getElementById('competitorBlue');
+
+    // Actualizar competidores al seleccionar jornada
+    eventSelect.addEventListener('change', function() {
+        const eventId = this.value;
+        
+        fetch(`/get_competitors/${eventId}`)
+            .then(response => response.json())
+            .then(competitors => {
+                // Actualizar ambos dropdowns
+                [competitorRed, competitorBlue].forEach(select => {
+                    select.innerHTML = '<option value="">Seleccionar B-BOY</option>';
+                    competitors.forEach(competitor => {
+                        const option = document.createElement('option');
+                        option.value = competitor.id;
+                        option.textContent = competitor.name;
+                        select.appendChild(option);
+                    });
+                });
+            });
+    });
+
+    // Actualizar tarjetas al seleccionar competidores
+    function updateCompetitorCard(selectElement, color) {
+        const competitorId = selectElement.value;
+        const nameElement = document.getElementById(`${color}Name`);
+        const pointsElement = document.getElementById(`${color}Points`);
+
+        if (competitorId) {
+            fetch(`/get_competitor/${competitorId}`)
+                .then(response => response.json())
+                .then(data => {
+                    nameElement.textContent = data.name;
+                    pointsElement.textContent = data.total_points;
+                });
+        } else {
+            nameElement.textContent = '-';
+            pointsElement.textContent = '0';
+        }
+    }
+
+    competitorRed.addEventListener('change', () => updateCompetitorCard(competitorRed, 'red'));
+    competitorBlue.addEventListener('change', () => updateCompetitorCard(competitorBlue, 'blue'));
+});
+</script>
+
+<style>
+.competitor-select {
+    border: 2px solid #4a4a4a;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.competitor-select:focus {
+    border-color: #00f7ff;
+    box-shadow: 0 0 15px #00f7ff;
+}
+
+.competitor-select option {
+    background: #2a2a2a;
+    color: white;
+}
+</style>
 {% endblock %}

@@ -385,3 +385,24 @@ textarea.form-control {
     border-radius: 8px;
     overflow: hidden;
 }
+
+.winner-banner {
+    transform: rotate(-45deg);
+    background: gold;
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    padding: 0.5rem 2rem;
+}
+
+.mvp-badge {
+    background: purple;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    margin-left: 1rem;
+}
+
+.judge-verdict.red { color: #ff4444; }
+.judge-verdict.blue { color: #4444ff; }
+.judge-verdict.tie { color: #888; }
