@@ -7,7 +7,7 @@
 
     <div class="mt-4">
         <ul class="nav nav-tabs" id="rubricTabs">
-            {% for rubric in ['Fundación', 'Originalidad', 'Dinámica', 'Ejecución', 'Batalla'] %}
+            {% for rubric in [categoria_juez] %}
             <li class="nav-item">
                 <a class="nav-link {% if loop.first %}active{% endif %}" 
                    data-bs-toggle="tab" 
@@ -19,7 +19,7 @@
         </ul>
 
         <div class="tab-content mt-3">
-            {% for rubric in ['Fundación', 'Originalidad', 'Dinámica', 'Ejecución', 'Batalla'] %}
+            {% for rubric in [categoria_juez] %} 
             <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
                  id="{{ rubric|lower }}">
                  

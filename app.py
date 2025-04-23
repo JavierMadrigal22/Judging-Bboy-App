@@ -32,7 +32,7 @@ class User(UserMixin, db.Model):
     description = db.Column(db.Text)
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default='bboy')  # 'bboy', 'juez', 'admin'
-    categoria = db.Column(db.String(20)) 
+    categoria = db.Column(db.String(50)) 
     nivel = db.Column(db.String(20))
     participations = db.relationship('Participation', backref='user', lazy='dynamic')
 
@@ -151,9 +151,12 @@ def logout():
 @app.route('/vote')
 @login_required
 def vote():
-    if current_user.role != 'juez':  # Verifica el rol general
-        flash('Acceso restringido a jueces certificados', 'warning')
+    # Verificar si el usuario es un juez
+    if current_user.role != 'juez':
+        flash('Acceso restringido a jueces', 'warning')
         return redirect(url_for('main'))
+    
+    # Pasar la categoría del juez a la plantilla
     return render_template('vote.html', categoria_juez=current_user.categoria)
 
 @app.route('/submit_vote', methods=['POST'])
@@ -161,36 +164,20 @@ def vote():
 def submit_vote():
     try:
         data = request.get_json()
-        current_battle = Battle.query.filter_by(is_active=True).first()
         
-        if not current_battle:
-            return jsonify({'error': 'No hay batalla activa'}), 400
-
-        # Guardar votos para Rojo y Azul
-        for color in ['red', 'blue']:
-            vote = Vote(
-                judge_id=current_user.id,
-                category=data['category'],
-                bboy_color=color,
-                score=data[f'{color}_score'],
-                battle_id=current_battle.id,
-                round_number=current_battle.round_number
-            )
-            db.session.add(vote)
-        
+        # Validar que el juez vota en su categoría asignada
+        if data['category'] != current_user.categoria:
+            return jsonify({'error': 'Categoría no autorizada'}), 403
+            
+        new_vote = Vote(
+            judge_id=current_user.id,
+            category=data['category'],
+            bboy_color=data['bboy_color'],
+            score=data['score']
+        )
+        db.session.add(new_vote)
         db.session.commit()
-        
-        # Determinar ganador de la categoría
-        red_score = int(data['red_score'])
-        blue_score = int(data['blue_score'])
-        winner = 'red' if red_score > blue_score else 'blue' if blue_score > red_score else 'tie'
-        
-        return jsonify({
-            'status': 'success',
-            'winner': winner,
-            'judge_id': current_user.id
-        })
-        
+        return jsonify({'status': 'success'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
