@@ -31,7 +31,8 @@ class User(UserMixin, db.Model):
     photo = db.Column(db.String(200))
     description = db.Column(db.Text)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), default='bboy')
+    role = db.Column(db.String(20), default='bboy')  # 'bboy', 'juez', 'admin'
+    categoria = db.Column(db.String(20)) 
     nivel = db.Column(db.String(20))
     participations = db.relationship('Participation', backref='user', lazy='dynamic')
 
@@ -47,6 +48,8 @@ class Vote(db.Model):
     category = db.Column(db.String(20), nullable=False)
     bboy_color = db.Column(db.String(10), nullable=False)
     score = db.Column(db.Integer, nullable=False)
+    battle_id = db.Column(db.Integer, db.ForeignKey('battle.id'))  # Añadir relación
+    round_number = db.Column(db.Integer)  
 
 class Competitor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,11 +59,10 @@ class Competitor(db.Model):
     wins = db.Column(db.Integer, default=0)
     ties = db.Column(db.Integer, default=0)
     losses = db.Column(db.Integer, default=0)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))  # Relación con evento
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))    # Relación con usuario
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    # Relación única y bien definida
-    event = db.relationship('Event', backref='competitors')
+    event = db.relationship('Event', back_populates='competitors')
     user = db.relationship('User', backref='competitor_profiles')
 
 class Battle(db.Model):
@@ -69,16 +71,16 @@ class Battle(db.Model):
     competitor_blue = db.Column(db.String(100), nullable=False)
     winner = db.Column(db.String(100))
     is_tie = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
     round_number = db.Column(db.Integer, nullable=False)
     
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
+    current_round = db.Column(db.Integer, default=1)  # Campo nuevo
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
-    
-    # Relación con participantes
-    participants = db.relationship('Participation', backref='event', lazy='dynamic')
+    competitors = db.relationship('Competitor', back_populates='event', lazy=True)
 
 
 class Participation(db.Model):
@@ -110,7 +112,16 @@ def standings1():
 @app.route('/main')
 @login_required
 def main():
-    return render_template('main.html')
+    active_event = Event.query.filter_by(is_active=True).first()
+    
+    # Si no hay evento activo, crea uno temporal
+    if not active_event:
+        active_event = Event(name="Temporal", current_round=1)
+    
+    return render_template('main.html',
+        judges=User.query.filter_by(role='juez').all(),
+        current_round=active_event.current_round
+    )
 
 @app.route('/standings')
 @login_required
@@ -140,27 +151,46 @@ def logout():
 @app.route('/vote')
 @login_required
 def vote():
-    if current_user.role != 'judge':
-        flash('Acceso restringido a jueces', 'warning')
+    if current_user.role != 'juez':  # Verifica el rol general
+        flash('Acceso restringido a jueces certificados', 'warning')
         return redirect(url_for('main'))
-    return render_template('vote.html')
+    return render_template('vote.html', categoria_juez=current_user.categoria)
 
-@csrf.exempt
 @app.route('/submit_vote', methods=['POST'])
 @login_required
-@csrf.exempt
 def submit_vote():
     try:
         data = request.get_json()
-        new_vote = Vote(
-            judge_id=current_user.id,
-            category=data['category'],
-            bboy_color=data['bboy_color'],
-            score=data['score']
-        )
-        db.session.add(new_vote)
+        current_battle = Battle.query.filter_by(is_active=True).first()
+        
+        if not current_battle:
+            return jsonify({'error': 'No hay batalla activa'}), 400
+
+        # Guardar votos para Rojo y Azul
+        for color in ['red', 'blue']:
+            vote = Vote(
+                judge_id=current_user.id,
+                category=data['category'],
+                bboy_color=color,
+                score=data[f'{color}_score'],
+                battle_id=current_battle.id,
+                round_number=current_battle.round_number
+            )
+            db.session.add(vote)
+        
         db.session.commit()
-        return jsonify({'status': 'success'})
+        
+        # Determinar ganador de la categoría
+        red_score = int(data['red_score'])
+        blue_score = int(data['blue_score'])
+        winner = 'red' if red_score > blue_score else 'blue' if blue_score > red_score else 'tie'
+        
+        return jsonify({
+            'status': 'success',
+            'winner': winner,
+            'judge_id': current_user.id
+        })
+        
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
@@ -267,18 +297,14 @@ def manage_events():
     if request.method == 'POST':
         event_name = request.form.get('event_name').strip()
         try:
-            if not event_name:
-                flash('El nombre de la jornada no puede estar vacío', 'danger')
-            elif Event.query.filter_by(name=event_name).first():
-                flash('Ya existe una jornada con ese nombre', 'danger')
-            else:
-                new_event = Event(name=event_name)
-                db.session.add(new_event)
-                db.session.commit()
-                flash('Nueva jornada creada!', 'success')
-                return redirect(url_for('view_event', event_id=new_event.id))
-                
+            new_event = Event(
+                name=event_name,
+                current_round=1  # Inicializa en ronda 1
+            )
+            db.session.add(new_event)
+            db.session.commit()
         except Exception as e:
+            
             db.session.rollback()
             flash(f'Error al crear jornada: {str(e)}', 'danger')
     
@@ -334,29 +360,117 @@ def view_event(event_id):
                          event=event,
                          participants=participants,
                          competitors=competitors)
+    
+    # Añade estas rutas antes del contexto de procesamiento
+
+@app.route('/get_competitors/<int:event_id>')
+@login_required
+def get_competitors(event_id):
+    try:
+        competitors = Competitor.query.filter_by(event_id=event_id).all()
+        return jsonify([{
+            'id': c.id,
+            'name': c.name,
+            'total_points': c.total_points,  # Nombre de campo consistente
+            'battles': c.battles,
+            'wins': c.wins,
+            'ties': c.ties,
+            'losses': c.losses
+        } for c in competitors])
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify([])
+
+@app.route('/get_competitor/<int:competitor_id>')
+@login_required
+def get_competitor(competitor_id):
+    try:
+        competitor = Competitor.query.get(competitor_id)
+        if not competitor:
+            return jsonify({})
+            
+        return jsonify({
+            'name': competitor.name,
+            'total_points': competitor.total_points,
+            'battles': competitor.battles,
+            'wins': competitor.wins,
+            'ties': competitor.ties,
+            'losses': competitor.losses
+        })
+        
+    except Exception as e:
+        print(f"Error getting competitor: {str(e)}")
+        return jsonify({})
 
 @app.context_processor
 def inject_events():
-    events = Event.query.order_by(Event.created_at.desc()).all()
-    return dict(all_events=events)
+    try:
+        events = Event.query.order_by(Event.created_at.desc()).all()
+        return dict(all_events=events)
+    except Exception as e:
+        print(f"Error getting events: {str(e)}")
+        return dict(all_events=[])
+    
+@app.route('/get_judges_decisions')
+def get_judges_decisions():
+    current_battle = Battle.query.filter_by(is_active=True).first()
+    if not current_battle:
+        return jsonify({})
+    
+    decisions = {}
+    judges = User.query.filter(User.role.in_(['Fundación', 'Originalidad', 'Dinámica', 'Ejecución', 'Batalla'])).all()
+    
+    for judge in judges:
+        red_vote = Vote.query.filter_by(
+            judge_id=judge.id,
+            battle_id=current_battle.id,
+            bboy_color='red'
+        ).order_by(Vote.id.desc()).first()
+        
+        blue_vote = Vote.query.filter_by(
+            judge_id=judge.id,
+            battle_id=current_battle.id,
+            bboy_color='blue'
+        ).order_by(Vote.id.desc()).first()
+        
+        if red_vote and blue_vote:
+            if red_vote.score > blue_vote.score:
+                decisions[judge.id] = 'red'
+            elif blue_vote.score > red_vote.score:
+                decisions[judge.id] = 'blue'
+            else:
+                decisions[judge.id] = 'tie'
+    
+    return jsonify(decisions)
 
 # --- Inicialización ---
 if __name__ == '__main__':
-    with app.app_context():
+    with app.app_context():  # <-- Añade este contexto
         create_upload_folder()
         db.create_all()
         
-        # Crear juez inicial si no existe
-        if not User.query.filter_by(aka='juez1').first():
-            judge = User(
-                aka='juez1',
-                city='Sede Central',
-                age=35,
-                description='Juez Certificado',
-                role='judge'
-            )
-            judge.set_password('123')
-            db.session.add(judge)
-            db.session.commit()
+        # Crear jueces
+        jueces = [
+            {'aka': 'JaviStep', 'role': 'juez', 'categoria': 'Fundación', 'password': '123'},
+            {'aka': 'juez2', 'role': 'juez', 'categoria': 'Originalidad', 'password': '123'},
+            {'aka': 'juez3', 'role': 'juez', 'categoria': 'Dinámica', 'password': '123'},
+            {'aka': 'juez4', 'role': 'juez', 'categoria': 'Ejecución', 'password': '123'},
+            {'aka': 'juez5', 'role': 'juez', 'categoria': 'Batalla', 'password': '123'}
+        ]
+        
+        for j in jueces:
+            if not User.query.filter_by(aka=j['aka']).first():
+                judge = User(
+                    aka=j['aka'],
+                    city='Sede Central',
+                    age=35,
+                    role=j['role'],
+                    categoria=j['categoria'],
+                    description=f"Juez de {j['categoria']}"
+                )
+                judge.set_password(j['password'])
+                db.session.add(judge)
+        
+        db.session.commit()
     
     app.run(host='0.0.0.0', port=5000, debug=True)
