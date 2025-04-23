@@ -27,7 +27,7 @@
                     <!-- B-Boy Rojo -->
                     <div class="col-md-6">
                         <div class="evaluation-card bg-underground-gray">
-                            <h3 class="neon-red mb-4" id="redCompetitorName-{{ rubric|lower }}">B-BOY ROJO</h3>
+                            <h3 class="neon-red mb-4" id="redCompetitorName-{{ rubric|lower }}">Cargando...</h3>
                             <div class="rating-buttons">
                                 {% for score, label in [(5, 'Perfecto'), (4, 'Bueno'), (3, 'Promedio'), (2, 'Pobre'), (1, 'Ninguno')] %}
                                 <div class="form-check">
@@ -51,7 +51,7 @@
                     <!-- B-Boy Azul -->
                     <div class="col-md-6">
                         <div class="evaluation-card bg-underground-gray">
-                            <h3 class="neon-blue mb-4" id="blueCompetitorName-{{ rubric|lower }}">B-BOY AZUL</h3>
+                            <h3 class="neon-blue mb-4" id="blueCompetitorName-{{ rubric|lower }}">Cargando...</h3>
                             <div class="rating-buttons">
                                 {% for score, label in [(5, 'Perfecto'), (4, 'Bueno'), (3, 'Promedio'), (2, 'Pobre'), (1, 'Ninguno')] %}
                                 <div class="form-check">
@@ -86,6 +86,23 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<!-- Incluir shared.js y eliminar script antiguo -->
-<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const updateNames = () => {
+        // Usar keys con mayúscula inicial
+        const redName = localStorage.getItem('selectedRedName') || 'B-BOY ROJO';
+        const blueName = localStorage.getItem('selectedBlueName') || 'B-BOY AZUL';
+
+        // Selector más específico
+        document.querySelectorAll('[id^="redCompetitorName-"], [id^="blueCompetitorName-"]').forEach(element => {
+            const isRed = element.id.startsWith('redCompetitorName');
+            element.textContent = isRed ? redName : blueName;
+        });
+    };
+
+    updateNames();
+    window.addEventListener('storage', updateNames);
+    window.addEventListener('updateMainView', updateNames);
+});
+    </script>
 {% endblock %}

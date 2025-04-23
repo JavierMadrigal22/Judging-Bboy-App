@@ -116,31 +116,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Actualizar tarjetas al seleccionar competidores
     function updateCompetitorCard(selectElement, color) {
-        const competitorId = selectElement.value;
-        const nameElement = document.getElementById(`${color}Name`);
-        const pointsElement = document.getElementById(`${color}Points`);
+    const competitorId = selectElement.value;
+    const nameElement = document.getElementById(`${color}Name`);
+    const pointsElement = document.getElementById(`${color}Points`);
+    const formattedColor = color.charAt(0).toUpperCase() + color.slice(1); // Nueva línea clave
 
-        // Dentro de updateCompetitorCard, reemplazar sessionStorage por localStorage
-        if (competitorId) {
-    fetch(`/get_competitor/${competitorId}`)
-        .then(response => response.json())
-        .then(data => {
-            nameElement.textContent = data.name;
-            pointsElement.textContent = data.total_points;
+    if (competitorId) {
+        fetch(`/get_competitor/${competitorId}`)
+            .then(response => response.json())
+            .then(data => {
+                nameElement.textContent = data.name;
+                pointsElement.textContent = data.total_points;
 
-            localStorage.setItem(`selected${color}Name`, data.name);
-            localStorage.setItem(`selected${color}Id`, competitorId);
-            
-            window.dispatchEvent(new CustomEvent('updateMainView', {
-                detail: { color, name: data.name }
-            }));
-        });
-} else {
-            nameElement.textContent = '-';
-            pointsElement.textContent = '0';
-        }
+                // Corregir keys con mayúscula inicial
+                localStorage.setItem(`selected${formattedColor}Name`, data.name);
+                localStorage.setItem(`selected${formattedColor}Id`, competitorId);
+                
+                // Disparar evento
+                const event = new CustomEvent('updateMainView', {
+                    detail: { color: color, name: data.name }
+                });
+                window.dispatchEvent(event);
+            });
+    } else {
+        nameElement.textContent = '-';
+        pointsElement.textContent = '0';
+        // Usar mismo formato para remover
+        localStorage.removeItem(`selected${formattedColor}Name`);
+        localStorage.removeItem(`selected${formattedColor}Id`);
     }
-
+}
     competitorRed.addEventListener('change', () => updateCompetitorCard(competitorRed, 'red'));
     competitorBlue.addEventListener('change', () => updateCompetitorCard(competitorBlue, 'blue'));
 });
