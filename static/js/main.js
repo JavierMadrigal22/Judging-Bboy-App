@@ -1,72 +1,67 @@
-// Actualizar votos en tiempo real
-function fetchVotes() {
-    fetch('/votes')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('red-votes').textContent = `Votos: ${data.red}`;
-            document.getElementById('blue-votes').textContent = `Votos: ${data.blue}`;
-        });
-}
+document.addEventListener('DOMContentLoaded', function () {
+    const eventSelect = document.getElementById('eventSelect');
+    const competitorRed = document.getElementById('competitorRed');
+    const competitorBlue = document.getElementById('competitorBlue');
+    
 
-// Enviar voto desde el juez
-function submitVote(competitor, category, value) {
-    fetch('/submit_vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ competitor, category, value })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') alert('Voto registrado!');
+    eventSelect.addEventListener('change', function () {
+        const eventId = this.value;
+
+        fetch(`/get_competitors/${eventId}`)
+            .then(response => response.json())
+            .then(competitors => {
+                [competitorRed, competitorBlue].forEach(select => {
+                    select.innerHTML = '<option value="">Seleccionar B-BOY</option>';
+                    competitors.forEach(competitor => {
+                        const option = document.createElement('option');
+                        option.value = competitor.id;
+                        option.textContent = competitor.name;
+                        select.appendChild(option);
+                    });
+                });
+            });
     });
-}
 
-// Actualizar cada 3 segundos
-setInterval(fetchVotes, 3000);
-
-// Manejar selección de radio buttons
-document.querySelectorAll('.form-check-input').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const card = this.closest('.evaluation-card');
-        const color = this.dataset.bboy === 'red' ? 'underground-red' : 'underground-blue';
-        card.style.borderColor = `var(--${color})`;
+    const voteLink = document.getElementById('voteLink');
+    window.addEventListener('updateMainView', () => {
+      const rId = localStorage.getItem('selectedRedId');
+      const bId = localStorage.getItem('selectedBlueId');
+      if (rId && bId) {
+        voteLink.href = `/vote?red=${rId}&blue=${bId}`;
+        voteLink.classList.remove('disabled');
+      }
     });
-});
+       
 
-// Enviar evaluación
-function submitEvaluation(category) {
-    const scores = {
-        red: document.querySelector(`input[name="${category.toLowerCase()}_bboy_rojo"]:checked`)?.dataset.score,
-        blue: document.querySelector(`input[name="${category.toLowerCase()}_bboy_azul"]:checked`)?.dataset.score
-    };
+    function updateCompetitorCard(selectElement, color) {
+        const competitorId = selectElement.value;
+        const nameElement = document.getElementById(`${color}Name`);
+        const pointsElement = document.getElementById(`${color}Points`);
+        const formattedColor = color.charAt(0).toUpperCase() + color.slice(1);
 
-    if (!scores.red || !scores.blue) {
-        alert('¡Debes evaluar ambos B-Boys!');
-        return;
+        if (competitorId) {
+            fetch(`/get_competitor/${competitorId}`)
+                .then(response => response.json())
+                .then(data => {
+                    nameElement.textContent = data.name;
+                    pointsElement.textContent = data.total_points;
+
+                    localStorage.setItem(`selected${formattedColor}Name`, data.name);
+                    localStorage.setItem(`selected${formattedColor}Id`, competitorId);
+
+                    const event = new CustomEvent('updateMainView', {
+                        detail: { color: color, name: data.name }
+                    });
+                    window.dispatchEvent(event);
+                });
+        } else {
+            nameElement.textContent = '-';
+            pointsElement.textContent = '0';
+            localStorage.removeItem(`selected${formattedColor}Name`);
+            localStorage.removeItem(`selected${formattedColor}Id`);
+        }
     }
 
-    fetch('/submit_evaluation', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            category: category,
-            scores: scores
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert('Evaluación guardada correctamente');
-        }
-    });
-}
-
-// Cerrar sidebar automáticamente en móviles al hacer click en un link
-document.querySelectorAll('.offcanvas a').forEach(link => {
-    link.addEventListener('click', () => {
-        if (window.innerWidth < 992) {
-            const sidebar = bootstrap.Offcanvas.getInstance(document.getElementById('sidebar'));
-            sidebar.hide();
-        }
-    });
+    competitorRed.addEventListener('change', () => updateCompetitorCard(competitorRed, 'red'));
+    competitorBlue.addEventListener('change', () => updateCompetitorCard(competitorBlue, 'blue'));
 });

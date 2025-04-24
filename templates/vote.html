@@ -5,6 +5,9 @@
         <h1 class="neon-red m-0"><i class="fas fa-hip-hop"></i> EVALUACIÓN - {{ current_user.username }}</h1>
     </header>
 
+    <!-- Token CSRF oculto -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
     <div class="mt-4">
         <ul class="nav nav-tabs" id="rubricTabs">
             {% for rubric in [categoria_juez] %}
@@ -19,31 +22,30 @@
         </ul>
 
         <div class="tab-content mt-3">
-            {% for rubric in [categoria_juez] %} 
-            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-                 id="{{ rubric|lower }}">
-                 
+            {% for rubric in [categoria_juez] %}
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ rubric|lower }}">
+
                 <div class="row gx-5">
                     <!-- B-Boy Rojo -->
                     <div class="col-md-6">
                         <div class="evaluation-card bg-underground-gray">
-                            <h3 class="neon-red mb-4" id="redCompetitorName-{{ rubric|lower }}">Cargando...</h3>
+                            <h3 class="neon-red mb-4" id="redCompetitorName-{{ categoria_juez|lower }}">Cargando...</h3>
                             <div class="rating-buttons">
                                 {% for score, label in [(5, 'Perfecto'), (4, 'Bueno'), (3, 'Promedio'), (2, 'Pobre'), (1, 'Ninguno')] %}
                                 <div class="form-check">
-                                    <input class="form-check-input" 
-                                           type="radio" 
-                                           name="{{ rubric|lower }}_bboy_rojo" 
+                                    <input class="form-check-input vote-btn"
+                                           type="radio"
+                                           name="{{ rubric|lower }}_bboy_rojo"
                                            id="{{ rubric|lower }}_rojo_{{ score }}"
-                                           data-category="{{ rubric }}"
-                                           data-bboy="red"
+                                           data-participant-id="rojo_{{ rubric|lower }}"
                                            data-score="{{ score }}">
-                                    <label class="form-check-label text-light" 
+                                    <label class="form-check-label text-light"
                                            for="{{ rubric|lower }}_rojo_{{ score }}">
                                         {{ score }} - {{ label }}
                                     </label>
                                 </div>
                                 {% endfor %}
+                                <div id="score-rojo_{{ rubric|lower }}" class="text-light mt-2"></div>
                             </div>
                         </div>
                     </div>
@@ -51,31 +53,30 @@
                     <!-- B-Boy Azul -->
                     <div class="col-md-6">
                         <div class="evaluation-card bg-underground-gray">
-                            <h3 class="neon-blue mb-4" id="blueCompetitorName-{{ rubric|lower }}">Cargando...</h3>
+                            <h3 class="neon-blue mb-4" id="blueCompetitorName-{{ categoria_juez|lower }}">Cargando...</h3>
                             <div class="rating-buttons">
                                 {% for score, label in [(5, 'Perfecto'), (4, 'Bueno'), (3, 'Promedio'), (2, 'Pobre'), (1, 'Ninguno')] %}
                                 <div class="form-check">
-                                    <input class="form-check-input" 
-                                           type="radio" 
-                                           name="{{ rubric|lower }}_bboy_azul" 
+                                    <input class="form-check-input vote-btn"
+                                           type="radio"
+                                           name="{{ rubric|lower }}_bboy_azul"
                                            id="{{ rubric|lower }}_azul_{{ score }}"
-                                           data-category="{{ rubric }}"
-                                           data-bboy="blue"
+                                           data-participant-id="azul_{{ rubric|lower }}"
                                            data-score="{{ score }}">
-                                    <label class="form-check-label text-light" 
+                                    <label class="form-check-label text-light"
                                            for="{{ rubric|lower }}_azul_{{ score }}">
                                         {{ score }} - {{ label }}
                                     </label>
                                 </div>
                                 {% endfor %}
+                                <div id="score-azul_{{ rubric|lower }}" class="text-light mt-2"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="text-center mt-4">
-                    <button class="btn btn-underground btn-lg" 
-                            onclick="submitEvaluation('{{ rubric }}')">
+                    <button class="btn btn-underground btn-lg" onclick="submitEvaluation('{{ rubric }}')">
                         <i class="fas fa-save me-2"></i>Guardar Evaluación
                     </button>
                 </div>
@@ -85,24 +86,7 @@
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const updateNames = () => {
-        // Usar keys con mayúscula inicial
-        const redName = localStorage.getItem('selectedRedName') || 'B-BOY ROJO';
-        const blueName = localStorage.getItem('selectedBlueName') || 'B-BOY AZUL';
-
-        // Selector más específico
-        document.querySelectorAll('[id^="redCompetitorName-"], [id^="blueCompetitorName-"]').forEach(element => {
-            const isRed = element.id.startsWith('redCompetitorName');
-            element.textContent = isRed ? redName : blueName;
-        });
-    };
-
-    updateNames();
-    window.addEventListener('storage', updateNames);
-    window.addEventListener('updateMainView', updateNames);
-});
-    </script>
+<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
 {% endblock %}
