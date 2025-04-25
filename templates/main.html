@@ -12,7 +12,16 @@
                         <option value="{{ event.id }}">{{ event.name }}</option>
                     {% endfor %}
                 </select>
+                <!-- Controles de Round -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-light">Round:</span>
+                    <span class="badge bg-primary" id="currentRoundDisplay">1</span>
+                    <button id="startBattleBtn" class="btn btn-sm btn-success">Iniciar Batalla</button>
+                    <button id="endBattleBtn" class="btn btn-sm btn-danger" disabled>Finalizar Batalla</button>
+                </div>
             </div>
+            <!-- Contador de Batalla -->
+            <div id="battleCountdown" class="text-center mt-2" style="font-size: 2rem; display: none;"></div>
         </div>
     </div>
 
@@ -25,7 +34,7 @@
                 <select class="form-select bg-dark text-light competitor-select" id="competitorRed">
                     <option value="">Seleccionar B-BOY Rojo</option>
                     {% for event in all_events %}
-                        {% if loop.first %}  {# Solo muestra participantes de la primera jornada inicialmente #}
+                        {% if loop.first %}
                             {% for competitor in event.competitors %}
                                 <option value="{{ competitor.id }}" data-event="{{ event.id }}">{{ competitor.name }}</option>
                             {% endfor %}
@@ -37,7 +46,12 @@
             <div class="competitor-card-top bg-underground-gray h-75 d-flex flex-column justify-content-center">
                 <h2 class="neon-red text-center mb-0" id="redName">-</h2>
                 <div class="votes-display-lg neon-red text-center mt-3" id="redPoints">0</div>
-                <small class="text-center text-light-50">Votos en esta ronda</small>
+                <div class="round-points-container d-flex justify-content-center gap-2 mt-2">
+                    <span class="badge bg-secondary round-point" data-round="1">R1: 0</span>
+                    <span class="badge bg-secondary round-point" data-round="2">R2: 0</span>
+                    <span class="badge bg-secondary round-point" data-round="3">R3: 0</span>
+                </div>
+                <div id="redWinnerBanner" class="winner-banner bg-danger" style="display: none;">GANADOR</div>
             </div>
         </div>
 
@@ -48,7 +62,7 @@
                 <select class="form-select bg-dark text-light competitor-select" id="competitorBlue">
                     <option value="">Seleccionar B-BOY Azul</option>
                     {% for event in all_events %}
-                        {% if loop.first %}  {# Solo muestra participantes de la primera jornada inicialmente #}
+                        {% if loop.first %}
                             {% for competitor in event.competitors %}
                                 <option value="{{ competitor.id }}" data-event="{{ event.id }}">{{ competitor.name }}</option>
                             {% endfor %}
@@ -60,19 +74,23 @@
             <div class="competitor-card-top bg-underground-gray h-75 d-flex flex-column justify-content-center">
                 <h2 class="neon-blue text-center mb-0" id="blueName">-</h2>
                 <div class="votes-display-lg neon-blue text-center mt-3" id="bluePoints">0</div>
-                <small class="text-center text-light-50">Votos en esta ronda</small>
+                <div class="round-points-container d-flex justify-content-center gap-2 mt-2">
+                    <span class="badge bg-secondary round-point" data-round="1">R1: 0</span>
+                    <span class="badge bg-secondary round-point" data-round="2">R2: 0</span>
+                    <span class="badge bg-secondary round-point" data-round="3">R3: 0</span>
+                </div>
+                <div id="blueWinnerBanner" class="winner-banner bg-primary" style="display: none;">GANADOR</div>
             </div>
         </div>
     </div>
 
-    <!-- Sección Inferior: Jueces (mantenemos la existente) -->
-    <!-- Sección Inferior: Votaciones -->
+    <!-- Sección Inferior: Jueces -->
     <div class="row mt-4">
         <div class="col-md-12">
             <div class="voting-section text-center bg-dark text-light p-4 rounded shadow-lg">
                 <h4 class="mb-3">🗳️ Votaciones</h4>
-                <h5 class="text-info">Round {{ current_round|default(1) }}:</h5>
-                <div class="d-flex justify-content-center gap-4 mt-3">
+                <h5 class="text-info">Round <span id="roundIndicator">{{ current_round|default(1) }}</span>:</h5>
+                <div class="d-flex justify-content-center gap-4 mt-3" id="judgesContainer">
                     {% for judge in judges %}
                     <div class="vote-box p-3 bg-secondary rounded judge-vote" 
                          id="judge-{{ judge.id }}"
@@ -85,9 +103,5 @@
             </div>
         </div>
     </div>
-
 </div>
-{% endblock %}
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}
